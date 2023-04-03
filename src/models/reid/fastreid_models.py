@@ -17,8 +17,7 @@ from fastreid.engine import DefaultTrainer, default_argument_parser, default_set
 from fastreid.utils.checkpoint import Checkpointer
 from fastreid.data.build import build_transforms
 
-#_WEIGHTS_DIR = '/usr/wiss/brasoand/hicl-mot/fast-reid'
-_WEIGHTS_DIR = '/storage/user/brasoand/orcun_gui/hicl_files/fast-reid'
+_WEIGHTS_DIR = osp.join(root,'fastreid-models')
 _FASTREID_MODEL_ZOO = {'msmt_SBS_R101_ibn': ('configs/MSMT17/sbs_R101-ibn.yml', 'model_weights/msmt_sbs_R101-ibn.pth'),
                         'msmt_SBS_S50':('configs/MSMT17/sbs_S50.yml', 'model_weights/msmt_sbs_S50.pth'),
                         'msmt_BOT_R101_ibn': ('configs/MSMT17/bagtricks_R101-ibn.yml', 'model_weights/msmt_bot_R101-ibn.pth'),
@@ -42,7 +41,7 @@ _FASTREID_MODEL_ZOO = {'msmt_SBS_R101_ibn': ('configs/MSMT17/sbs_R101-ibn.yml', 
                         }            
 
 
-
+print(_WEIGHTS_DIR)
 
 def _get_cfg(fastreid_cfg_file, fastreid_model_weights):
     """
