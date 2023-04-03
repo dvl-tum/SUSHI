@@ -93,7 +93,7 @@ def get_arguments(args=None):
 
     # REID SETTING    
     parser.add_argument('--reid_arch', help='Reid model path to obtain features', type=str,
-                        default='resnet_fc256')
+                        default='fastreid_msmt_BOT_R50_ibn')
     parser.add_argument('--reid_sim_fn', help='Reid model path to obtain features', type=str,
                         default='l2')
     parser.add_argument('--edge_sim_fn', help='Reid model path to obtain features', type=str,
@@ -163,8 +163,8 @@ def get_arguments(args=None):
 
     
     # ReID 
-    parser.add_argument('--reid_img_h', help='Height to which ReID box images are resized', type=int, default=128)
-    parser.add_argument('--reid_img_w', help='Height to which ReID box images are resized', type=int, default=56)
+    parser.add_argument('--reid_img_h', help='Height to which ReID box images are resized', type=int, default=256)
+    parser.add_argument('--reid_img_w', help='Height to which ReID box images are resized', type=int, default=128)
     parser.add_argument('--zero_nodes', action='store_true', default=False)
 
     # MOTION FEATURES
