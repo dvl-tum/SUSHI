@@ -161,8 +161,6 @@ def get_arguments(args=None):
     parser.add_argument('--interpolate_motion', action='store_true', help='If true, missing locations in each node location are filled via linear interpolation', default=False)
     parser.add_argument('--linear_center_only', action='store_true',help='If true, the linear motion model will only predict center locations, and leave width/height constant', default=False)
 
-    parser.add_argument('--motion_parametrization', type=str,help='Coordinate parametrization used for node trajectories. Can be abs: absolute coordinates, or offsets for relative displacements', default='abs')
-    
     # Hierarchical Features
     parser.add_argument('--do_hicl_feats', action='store_true', default=False)
     parser.add_argument("--hicl_feats_args", dest="hicl_feats_args", action=StoreDictKeyPair, nargs="+", metavar="KEY=VAL", default={})
@@ -175,9 +173,6 @@ def get_arguments(args=None):
 
     # MOTION FEATURES
     parser.add_argument('--mpn_use_motion', type=_store_bool, nargs='*', help='Use motion predictions GIoU as edge feature at each layer', default=[False, True, True, True, True, True, True, True, True])
-    parser.add_argument('--mpn_use_baseline_feats', type=_store_bool, nargs='*', help='Use baseline angle and l2 edge features at each layer', default=[False]*9)
-    parser.add_argument('--mpn_use_vel_feats', type=_store_bool, nargs='*', help='Use additional velocity features as edge features at each layer', default=[False]*9)
-
     parser.add_argument('--mpn_use_reid_edge', type=_store_bool, nargs='*', default=[True]*9)
     parser.add_argument('--mpn_use_pos_edge', type=_store_bool, nargs='*', default=[True]*9)
 
@@ -212,7 +207,7 @@ def post_config(config):
     config.rama_opt.verbose = False
 
     # Motion things
-    config.do_motion = max(config.mpn_use_motion + config.mpn_use_baseline_feats + config.mpn_use_vel_feats)
+    config.do_motion = max(config.mpn_use_motion)
 
     return config
 
@@ -236,7 +231,7 @@ def ensure_config_consistency(config):
 
         assert config.frames_per_graph == config.frames_per_level[-1], "Total number of frames should be equal to the frames in last level"
         assert config.hicl_depth == len(config.frames_per_level), "Depth is not equal to number of frames per level"
-        for attr in ('mpn_use_motion', 'mpn_use_baseline_feats', 'mpn_use_vel_feats'):
+        for attr in ('mpn_use_motion',):
             attr_ = getattr(config, attr)
             if max(attr_):
                 assert config.hicl_depth == len(attr_), f"Depth is not equal to length of {attr}"

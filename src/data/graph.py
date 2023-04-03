@@ -2,7 +2,7 @@ import torch
 from torch_geometric.data import Data
 import numpy as np
 from src.utils.graph_utils import find_graph_time_valid_edges, prune_edges, compute_edge_features, assign_edge_labels, make_symmetric_edges, assign_node_ids
-from src.utils.motion_utils import compute_vel_feats, torch_get_motion_feats
+from src.utils.motion_utils import  torch_get_motion_feats
 from torch_scatter import scatter_mean, scatter_max, scatter_min, scatter_add
 from torch.nn.utils.rnn import pad_sequence
 import torch.nn.functional as F
@@ -203,14 +203,10 @@ class HierarchicalGraph(Data):
 
         return x_track, x_track_length
 
-    def get_motion_features(self, max_length, interpolate, parametrization):
+    def get_motion_features(self, max_length, interpolate):
         """ Wrapper function around the actual numba code that gathers the trajectory information
         of each node in the current graph
         """
-        gpu_device = self.x_frame.device
-
-        # Prepare inputs
-        
         motion_feats = torch_get_motion_feats(map_from_init=self.map_from_init,
                                               x_frame_=self.x_frame,
                                               x_center=self.x_center,
@@ -220,24 +216,11 @@ class HierarchicalGraph(Data):
         
         
         have_non_singleton = not motion_feats['x_ignore_traj'].all()
-        if have_non_singleton:
-            motion_feats['x_fwrd_missing'] = None # Dummy assignments, theses are not used
-            motion_feats['h_fwrd_vel'] = None # Dummy assignments, theses are not used
-            motion_feats['x_bwrd_missing'] = None # Dummy assignments, theses are not used
-            motion_feats['h_bwrd_vel'] = None # Dummy assignments, theses are not used
-
-        else:
-            motion_feats = {'x_fwrd_rel_vel': torch.zeros((0, 4), device=gpu_device),
-                            'x_bwrd_rel_vel': torch.zeros((0, 4), device=gpu_device),
-                            'x_fwrd_motion': torch.zeros((0, max_length, 4), device=gpu_device),
-                            'x_bwrd_motion': torch.zeros((0, max_length, 4), device=gpu_device),
-                            'x_fwrd_length': torch.zeros((0,),dtype=torch.int, device=gpu_device),
-                            'x_bwrd_length': torch.zeros((0,),dtype=torch.int, device=gpu_device),
-                            'x_ignore_traj': torch.as_tensor(motion_feats['x_ignore_traj']).to(gpu_device),
-                            'x_fwrd_missing': torch.zeros((0, max_length), device=gpu_device),
-                            'x_bwrd_missing': torch.zeros((0, max_length), device=gpu_device),
-                            'h_bwrd_vel': torch.zeros((0, 4), device=gpu_device),
-                            'h_fwrd_vel': torch.zeros((0, 4), device=gpu_device),
+        if not have_non_singleton:
+            device = self.x_frame.device
+            motion_feats = {'x_fwrd_motion': torch.zeros((0, max_length, 4), device=device),
+                            'x_bwrd_motion': torch.zeros((0, max_length, 4), device=device),
+                            'x_ignore_traj': motion_feats['x_ignore_traj']
                             }
 
         return motion_feats
@@ -259,8 +242,7 @@ class HierarchicalGraph(Data):
         
         if self.curr_depth >0 and config.do_motion:
             motion_features = self.get_motion_features(max_length = config.motion_max_length[self.curr_depth - 1],
-                                                       interpolate =config.interpolate_motion,
-                                                       parametrization=config.motion_parametrization)
+                                                       interpolate =config.interpolate_motion)
             fwrd_vel = torch.zeros(((~motion_features['x_ignore_traj']).sum(), 4), device = x_node.device, dtype=torch.float)
             bwrd_vel = fwrd_vel.clone()
                 
@@ -306,9 +288,6 @@ class HierarchicalGraph(Data):
         # Edge features
         motion_feats = {'motion_giou': curr_graph.pruning_score}
         
-        #edge_feats_to_use_ = ['secs_time_dists', 'norm_feet_x_dists', 'norm_feet_y_dists',
-        #                      'bb_height_dists', 'bb_width_dists', 'emb_dists']
-
         edge_feats_to_use_ = ['secs_time_dists']
         if config.mpn_use_pos_edge[self.curr_depth]:
             edge_feats_to_use_ += ['norm_feet_x_dists', 'norm_feet_y_dists', 'bb_height_dists', 'bb_width_dists']
@@ -318,15 +297,7 @@ class HierarchicalGraph(Data):
 
         if config.mpn_use_motion[self.curr_depth]:
             edge_feats_to_use_ += ['motion_giou']
-
-        if config.mpn_use_baseline_feats[self.curr_depth]:
-            edge_feats_to_use_ += ['baseline_clusters_cosine', 'baseline_clusters_l2']
                         
-        if config.mpn_use_vel_feats[self.curr_depth]:
-            vel_feats = compute_vel_feats(fwrd_vel_=curr_graph.fwrd_vel, bwrd_vel_=curr_graph.bwrd_vel, batch=curr_graph, edge_index=edge_ixs)            
-            edge_feats_to_use_ += list(vel_feats.keys())
-            motion_feats.update(vel_feats)
-
         reid_sim_fn = F.pairwise_distance if config.edge_sim_fn == 'l2' else lambda x, y: 2 - F.cosine_similarity(x, y)
 
         edge_features = compute_edge_features(edge_ixs=edge_ixs, node_frames=x_frame, node_bboxes=x_bbox,

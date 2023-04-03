@@ -6,7 +6,7 @@ class HICLNet(nn.Module):
     """
     Hierarchical network that contains all layers
     """
-    def __init__(self, submodel_type, submodel_params, hicl_depth, use_bline_feats, use_motion, use_vel_feats, use_reid_edge, use_pos_edge,
+    def __init__(self, submodel_type, submodel_params, hicl_depth, use_motion, use_reid_edge, use_pos_edge,
                  share_weights, edge_level_embed, node_level_embed):
         """
         :param model_type: Network to use at each layer
@@ -15,7 +15,7 @@ class HICLNet(nn.Module):
         """
         super(HICLNet, self).__init__()
         
-        for per_layer_params in (use_bline_feats, use_motion, use_vel_feats, use_reid_edge, use_pos_edge):
+        for per_layer_params in (use_motion, use_reid_edge, use_pos_edge):
             assert hicl_depth == len(per_layer_params), f"{hicl_depth }, {per_layer_params}"
 
         assert share_weights in ('none', 'all_but_first', 'all') 
@@ -26,8 +26,8 @@ class HICLNet(nn.Module):
         layer_idxs = _SHARE_WEIGHTS_IDXS[share_weights]
 
         # All hierarchical layers are contained in a nn.ModuleList
-        layers = [submodel_type(submodel_params, bline_feats=bline_feats, motion=motion, vel_feats=vel_feats, pos_feats=pos_feats, reid=reid) 
-                  for bline_feats, motion, vel_feats, pos_feats, reid in zip(use_bline_feats, use_motion, use_vel_feats, use_pos_edge, use_reid_edge)]
+        layers = [submodel_type(submodel_params, motion=motion, pos_feats=pos_feats, reid=reid) 
+                  for motion, pos_feats, reid in zip(use_motion, use_pos_edge, use_reid_edge)]
 
         self.layers = nn.ModuleList([layers[idx] for idx in layer_idxs])
 

@@ -94,8 +94,7 @@ class HICLTracker:
 
 
         return HICLNet(submodel_type=MOTMPNet, submodel_params=mpntrack_params['graph_model_params'],
-                       hicl_depth=self.config.hicl_depth, use_bline_feats=self.config.mpn_use_baseline_feats, 
-                       use_motion=self.config.mpn_use_motion, use_vel_feats=self.config.mpn_use_vel_feats,
+                       hicl_depth=self.config.hicl_depth, use_motion=self.config.mpn_use_motion,
                        use_reid_edge=self.config.mpn_use_reid_edge, use_pos_edge=self.config.mpn_use_pos_edge,
                        share_weights=self.config.share_weights, edge_level_embed=self.config.edge_level_embed,
                        node_level_embed=self.config.node_level_embed
@@ -312,23 +311,13 @@ class HICLTracker:
 
         fwrd_motion_pred = motion_model(x_motion=batch.x_fwrd_motion, 
                                         x_last_pos=batch.x_center_end[~batch.x_ignore_traj],
-                                        x_missing=batch.x_fwrd_missing, 
-                                        x_length=batch.x_fwrd_length,
-                                        x_last_rel=batch.x_fwrd_rel_vel,
                                         pred_length=self.config.motion_pred_length[curr_depth - 1],
-                                        h_vel=batch.h_fwrd_vel,
-                                        parametrization=self.config.motion_parametrization,
                                         linear_center_only=self.config.linear_center_only
                                         )
         
         bwrd_motion_pred = motion_model(x_motion=batch.x_bwrd_motion, 
                                         x_last_pos=batch.x_center_start[~batch.x_ignore_traj],
-                                        x_missing=batch.x_bwrd_missing, 
-                                        x_length=batch.x_bwrd_length,
-                                        x_last_rel=batch.x_bwrd_rel_vel,
                                         pred_length=self.config.motion_pred_length[curr_depth - 1],
-                                        h_vel=batch.h_bwrd_vel,
-                                        parametrization=self.config.motion_parametrization,
                                         linear_center_only=self.config.linear_center_only
                                         )            
 

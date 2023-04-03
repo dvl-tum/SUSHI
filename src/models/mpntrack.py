@@ -232,7 +232,7 @@ class MOTMPNet(nn.Module):
 
     This class was initially based on: https://github.com/deepmind/graph_nets tensorflow implementation.
     """
-    def __init__(self, model_params, bb_encoder = None, bline_feats=None, motion=None, vel_feats=None, pos_feats=None, reid=None):
+    def __init__(self, model_params, bb_encoder = None, motion=None, pos_feats=None, reid=None):
         """
         Defines all components of the model
         Args:
@@ -245,16 +245,10 @@ class MOTMPNet(nn.Module):
         self.model_params = model_params
 
         # Define Encoder and Classifier Networks
-        encoder_feats_dict = deepcopy(model_params['encoder_feats_dict'])
-        if bline_feats:
-            encoder_feats_dict['edge_in_dim'] += 2
-            
+        encoder_feats_dict = deepcopy(model_params['encoder_feats_dict'])            
         if motion:
             encoder_feats_dict['edge_in_dim'] += 1
-        
-        if vel_feats:
-            encoder_feats_dict['edge_in_dim'] += 4
-        
+                
         if not reid:
             encoder_feats_dict['edge_in_dim'] -= 1
 
