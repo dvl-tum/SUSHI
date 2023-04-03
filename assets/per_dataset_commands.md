@@ -9,7 +9,7 @@ Below, we provide the training and evaluation commands used to reproduce the res
 
 For training, run:
 ```
-RUN=mot17_private_train
+RUN=mot17_public_train
 REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 DATA_PATH=your_data_path
 python scripts/main.py --experiment_mode train --cuda --train_splits mot17-train-all --val_splits mot17-train-all --run_id ${RUN} --interpolate_motion --linear_center_only --det_file aplift --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp
@@ -17,7 +17,7 @@ python scripts/main.py --experiment_mode train --cuda --train_splits mot17-train
 
 To obtain results on the test-set sequences run:
 ```
-RUN=mot17_private_test
+RUN=mot17_public_test
 REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 DATA_PATH=your_data_path
 PRETRAINED_MODEL_PATH=mot17public.pth
@@ -28,7 +28,7 @@ Note that there are no ground-truth files. Evaluation is done in an online serve
 ### MOT17 - private detections
 You just have to replace `--det_file aplift` with `--det_file byte065` in the previous two commands, as well as your checkpoint path.  Specifically, for training, run:
 ```
-RUN=mot17_private_test
+RUN=mot17_private_train
 REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 DATA_PATH=your_data_path
 python scripts/main.py --experiment_mode train --cuda --train_splits mot17-train-all --val_splits mot17-train-all --run_id ${RUN} --interpolate_motion --linear_center_only --det_file byte065 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp
@@ -84,7 +84,7 @@ Note that there are no ground-truth files. Evaluation is done in an online serve
 ### MO20 - private detections
 You just have to replace `--det_file aplift` with `--det_file byte065` in the previous two commands, as well as your checkpoint path.  Specifically, for training, run:
 ```
-RUN=mot20_public_train
+RUN=mot20_private_train
 REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 DATA_PATH=your_data_path
 python scripts/main.py --experiment_mode train --cuda --train_splits mot20-train-all 
@@ -93,7 +93,7 @@ python scripts/main.py --experiment_mode train --cuda --train_splits mot20-train
 
 To obtain results on the test-set sequences run:
 ```
-RUN=mot20_public_test
+RUN=mot20_private_test
 REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 DATA_PATH=your_data_path
 PRETRAINED_MODEL_PATH=mot20private.pth
@@ -104,11 +104,18 @@ Note that there are no ground-truth files. Evaluation is done in an online serve
 ## DanceTrack
 For training, run:
 ```
+RUN=dancetrack_train
+REID_ARCH='fastreid_msmt_BOT_R50_ibn'
+DATA_PATH=your_data_path
 python scripts/main.py --experiment_mode train --cuda --train_splits dancetrack-train-all --val_splits dancetrack-val-all --run_id ${RUN}_${REID_ARCH} --interpolate_motion --linear_center_only --det_file byte065 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp --pruning_method geometry motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01  
 ```
 
 To obtain results on the test sequences, run:
 ```
+RUN=dancetrack_test
+REID_ARCH='fastreid_msmt_BOT_R50_ibn'
+DATA_PATH=your_data_path
+PRETRAINED_MODEL_PATH=dancetrack.pth
 python scripts/main.py --experiment_mode test --cuda --test_splits dancetrack-test-all --run_id ${RUN} --interpolate_motion --linear_center_only --det_file byte065 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp --pruning_method geometry motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 --hicl_model_path ${PRETRAINED_MODEL_PATH} 
 ```
 Note that there are no ground-truth files. Evaluation is done in an online server.
