@@ -41,7 +41,6 @@ _FASTREID_MODEL_ZOO = {'msmt_SBS_R101_ibn': ('configs/MSMT17/sbs_R101-ibn.yml', 
                         }            
 
 
-print(_WEIGHTS_DIR)
 
 def _get_cfg(fastreid_cfg_file, fastreid_model_weights):
     """

@@ -255,7 +255,7 @@ class MOTMPNet(nn.Module):
             encoder_feats_dict['edge_in_dim'] -= 4
 
 
-        print("EXPECTED EDGE INPUT DIM??", encoder_feats_dict['edge_in_dim'])
+        # print("EXPECTED EDGE INPUT DIM??", encoder_feats_dict['edge_in_dim'])
 
         classifier_feats_dict = model_params['classifier_feats_dict']
 

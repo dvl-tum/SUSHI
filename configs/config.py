@@ -53,7 +53,7 @@ def get_arguments(args=None):
     parser.add_argument('--data_path', help='Where is data located?', type=str,
                         default='/storage/slurm/cetintas')
     parser.add_argument('--output_path', help='Where is the output folder?', type=str,
-                        default='/storage/user/cetintas/hicl-mot/output')
+                        default='/storage/user/cetintas/SUSHI/output')
 
     parser.set_defaults(mot_sub_folder='mot_files')  # Tracker output for sequences will be stored here
 
@@ -78,9 +78,9 @@ def get_arguments(args=None):
     # PRETRAINED MODELS
     parser.add_argument('--save_cp', help='Save checkpoints', dest='save_cp', action='store_true')
     parser.add_argument('--feature_embedding_model_path', help='Reid model path to obtain features', type=str,
-                        default='models/reid/resnet50_market_cuhk_duke.tar-232')
+                        default='')
     parser.add_argument('--hicl_model_path', help='HICL model path to perform tracking', type=str,
-                        default='/usr/stud/cetintas/Desktop/hicl-mot-layer-vis/e4/hiclnet_split1.pth')
+                        default='')
     
     parser.add_argument('--load_train_ckpt', action='store_true', default=False)
     
