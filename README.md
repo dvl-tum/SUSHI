@@ -37,18 +37,27 @@ Tracking  objects over long videos effectively means solving a spectrum of probl
 
 ## Setup
 
-1: Clone and enter the repo
-2: Create an anaconda environment
+1. Clone and enter this repository
+    ```
+    git clone https://github.com/dvl-tum/SUSHI.git
+    cd SUSHI
+    ```
+
+3. Create an [Anaconda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) for this project:
+    ```
+    conda env create -f environment.yml
+    conda activate SUSHI
+    ```
 
 3. Clone [fast-reid](https://github.com/JDAI-CV/fast-reid) (latest version should be compatible but we use [this](https://github.com/JDAI-CV/fast-reid/tree/afe432b8c0ecd309db7921b7292b2c69813d0991) version) and install its dependencies. The `fast-reid` repo should be inside `SUSHI` root:
-```
-SUSHI
-  ├── src
-  ├── fast-reid
-  └── ...
-```
+    ```
+    SUSHI
+    ├── src
+    ├── fast-reid
+    └── ...
+    ```
 
-4. Download [MOT17](https://motchallenge.net/data/MOT17/), [MOT20](https://motchallenge.net/data/MOT20/) and [DanceTrack](https://dancetrack.github.io/) datasets. In addition, prepare seqmaps to run evaluation (for details see [TrackEval](https://github.com/JonathonLuiten/TrackEval)). We provide an example seqmap here (TODO). Overall, the expected folder structure is: 
+4. Download [MOT17](https://motchallenge.net/data/MOT17/), [MOT20](https://motchallenge.net/data/MOT20/) and [DanceTrack](https://dancetrack.github.io/) datasets. In addition, prepare seqmaps to run evaluation (for details see [TrackEval](https://github.com/JonathonLuiten/TrackEval)). We provide an [example seqmap](https://drive.google.com/drive/folders/1LYRYPuNWIWWz-HXSjuqyX8Fz9fDunTRI?usp=sharing). Overall, the expected folder structure is: 
 
     ```
     DATA_PATH
@@ -63,7 +72,7 @@ SUSHI
         └── train
         │    ├── MOT17-02
         │    │   ├── det
-        │    │   │   └── det_file_name.txt
+        │    │   │   └── det.txt
         │    │   └── gt
         │    │   │   └── gt.txt
         │    │   └── img1 
@@ -77,23 +86,36 @@ SUSHI
 
 
 
-5: Optional (detection files, download our models)
+5. (OPTIONAL) Download [our detections](https://drive.google.com/drive/folders/1bxw1Hz77LCCW3cWizhg_q03vk4aXUriz?usp=share_link) and [pretrained models](https://drive.google.com/drive/folders/1cU7LeTAeKxS-nvxqrUdUstNpR-Wpp5NV?usp=share_link) and arrange them according to the expected file structure (See step 4).
 
 
-## Model zoo
-MOT17 Pub
-MOT17 Private
-MOT20 Pub
-MOT20 Private
-DanceTrack
+## Training
+You can launch a training from the command line. An example command for MOT17 training:
 
+```
+RUN=example_mot17_training
+REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 
+DATA_PATH=YOUR_DATA_PATH
 
-## Training 
+python scripts/main.py --experiment_mode train --cuda --train_splits mot17-train-all --val_splits mot17-train-all --frames_per_graph 512 --top_k_nns 10 --hicl_depth 9 --frames_per_level 2 4 8 16 32 64 128 256 512 --depth_pretrain_iteration 500 --run_id ${RUN}_${REID_ARCH} --motion_pred_length 2 4 8 16 32 64 128 256 --motion_max_length 2 4 8 16 32 64 128 256 --interpolate_motion --mpn_use_vel_feats 0 0 0 0 0 0 0 0 0  --mpn_use_baseline_feats 0 0 0 0 0 0 0 0 0 --linear_center_only --pruning_method geometry motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 --det_file byte065 --mpn_use_reid_edge 1 1 1 1 1 1 1 1 1 --mpn_use_pos_edge 1 1 1 1 1 1 1 1 1 --mpn_use_motion 0 1 1 1 1 1 1 1 1 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --share_weights all_but_first --reid_arch $REID_ARCH --edge_level_embed --save_cp
+```
+
 
 
 ## Testing
+You can test a trained model from the command line. An example for testing on MOT17 training set:
+```
+RUN=example_mot17_test
+REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 
+DATA_PATH=your_data_path
+PRETRAINED_MODEL_PATH=your_pretrained_model_path
+
+python scripts/main.py --experiment_mode test --cuda --test_splits mot17-train-all --frames_per_graph 512 --top_k_nns 10 --hicl_depth 9 --frames_per_level 2 4 8 16 32 64 128 256 512 --depth_pretrain_iteration 500 --run_id ${RUN}_${REID_ARCH} --motion_pred_length 2 4 8 16 32 64 128 256 --motion_max_length 2 4 8 16 32 64 128 256 --interpolate_motion --mpn_use_vel_feats 0 0 0 0 0 0 0 0 0  --mpn_use_baseline_feats 0 0 0 0 0 0 0 0 0 --linear_center_only --pruning_method geometry motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 --det_file byte065 --mpn_use_reid_edge 1 1 1 1 1 1 1 1 1 --mpn_use_pos_edge 1 1 1 1 1 1 1 1 1 --mpn_use_motion 0 1 1 1 1 1 1 1 1 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --share_weights all_but_first --reid_arch $REID_ARCH --edge_level_embed --save_cp --hicl_model_path ${PRETRAINED_MODEL_PATH}
+```
+
+Launching this experiment with our MOT17 Private model should result in: `90.826 IDF1`, `80.884 HOTA` and `91.953 MOTA`. 
 
 
 
