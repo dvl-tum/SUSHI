@@ -107,7 +107,7 @@ For training, run:
 RUN=dancetrack_train
 REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 DATA_PATH=your_data_path
-python scripts/main.py --experiment_mode train --cuda --train_splits dancetrack-train-all --val_splits dancetrack-val-all --run_id ${RUN}_${REID_ARCH} --interpolate_motion --linear_center_only --det_file byte065 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp --pruning_method geometry motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01  
+python scripts/main.py --experiment_mode train --cuda --train_splits dancetrack-train-all --val_splits dancetrack-val-all --run_id ${RUN}_${REID_ARCH} --interpolate_motion --linear_center_only --det_file byte065 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp --pruning_method geometry motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 --no_interpolate
 ```
 
 To obtain results on the test sequences, run:
@@ -116,7 +116,7 @@ RUN=dancetrack_test
 REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 DATA_PATH=your_data_path
 PRETRAINED_MODEL_PATH=dancetrack.pth
-python scripts/main.py --experiment_mode test --cuda --test_splits dancetrack-test-all --run_id ${RUN} --interpolate_motion --linear_center_only --det_file byte065 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp --pruning_method geometry motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 --hicl_model_path ${PRETRAINED_MODEL_PATH} 
+python scripts/main.py --experiment_mode test --cuda --test_splits dancetrack-test-all --run_id ${RUN} --interpolate_motion --linear_center_only --det_file byte065 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp --pruning_method geometry motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 motion_01 --hicl_model_path ${PRETRAINED_MODEL_PATH} --no_interpolate
 ```
 Note that there are no ground-truth files. Evaluation is done in an online server.
 
