@@ -37,6 +37,49 @@ Tracking  objects over long videos effectively means solving a spectrum of probl
 
 ## Setup
 
+1: Clone and enter the repo
+2: Create an anaconda environment
+3: Setup fast-reid
+
+4. Download [MOT17](https://motchallenge.net/data/MOT17/), [MOT20](https://motchallenge.net/data/MOT20/) and [DanceTrack](https://dancetrack.github.io/) datasets. In addition, prepare seqmaps to run evaluation (for details see [TrackEval](https://github.com/JonathonLuiten/TrackEval)). We provide an example seqmap here (TODO). Overall, the expected folder structure is: 
+
+    ```
+    DATA_PATH
+    ├── DanceTrack
+    │   └── ...
+    ├── MOT20
+    │   └── ...
+    └── MOT17
+        └── seqmaps
+        │    ├── seqmap_file_name_matching_split_name.txt
+        │    └── ...
+        └── train
+        │    ├── MOT17-02
+        │    │   ├── det
+        │    │   │   └── det_file_name.txt
+        │    │   └── gt
+        │    │   │   └── gt.txt
+        │    │   └── img1 
+        │    │   │   └── ...
+        │    │   └── seqinfo.ini
+        │    └── ...
+        └── test
+             └── ...
+
+    ```
+
+
+
+5: Optional (detection files, download our models)
+
+
+## Model zoo
+MOT17 Pub
+MOT17 Private
+MOT20 Pub
+MOT20 Private
+DanceTrack
+
 
 
 ## Training 
