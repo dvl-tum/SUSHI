@@ -102,7 +102,7 @@ DATA_PATH=YOUR_DATA_PATH
 
 python scripts/main.py --experiment_mode train --cuda --train_splits mot17-train-all --val_splits mot17-train-all --run_id ${RUN}_${REID_ARCH} --interpolate_motion --linear_center_only --det_file byte065 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp
 ```
-
+You can find specific commands and configurations [here](assets/per_dataset_commands.md).
 
 
 ## Testing
@@ -119,7 +119,7 @@ python scripts/main.py --experiment_mode test --cuda --test_splits mot17-train-a
 
 Launching this experiment with our MOT17 Private model should result in: `90.826 IDF1`, `80.884 HOTA` and `91.953 MOTA`. 
 
-
+You can find specific commands and configurations [here](assets/per_dataset_commands.md).
 
 ## Citation
 If you use our work in your research, please cite our publication:
