@@ -32,7 +32,7 @@ def assign_node_ids(init_node_ids, map_from_init, threshold):
 
 
 
-def find_graph_time_valid_edges(node_frames, node_frames_mask, depth, frames_per_level, formulation, connectivity, pruning_method=['geometry', 'reid', 'reid']):
+def find_graph_time_valid_edges(node_frames, node_frames_mask, depth, frames_per_level, connectivity, pruning_method=['geometry', 'reid', 'reid']):
 
     """
     Return edge connections of a graph from node features. Edges need to be within a valid time distance.
@@ -53,9 +53,7 @@ def find_graph_time_valid_edges(node_frames, node_frames_mask, depth, frames_per
     # Ensure that nodes are sorted according to their starting frame
     assert (torch.sort(node_frames[0])[0] == node_frames[0]).all(), "Nodes are NOT sorted by starting frame. Graph was not created properly!"
 
-    if formulation == 'flow':
-        if connectivity == 'chunk':
-            edge_ixs = find_time_valid_connections_flowchunk(node_frames=node_frames, depth=depth, frames_per_level=frames_per_level)
+    edge_ixs = find_time_valid_connections_flowchunk(node_frames=node_frames, depth=depth, frames_per_level=frames_per_level)
 
     return edge_ixs
 

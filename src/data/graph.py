@@ -123,10 +123,7 @@ class HierarchicalGraph(Data):
             x_node = self.x_node
             x_reid = self.x_reid
             x_frame = (self.x_frame, self.x_frame)
-            if config.formulation == 'flow':
-                x_frame_mask = None
-            elif config.formulation == 'cluster':
-                x_frame_mask = self.x_one_hot_frame
+            x_frame_mask = None
             x_bbox = (self.x_bbox, self.x_bbox)
             x_center = (self.x_center, self.x_center)
             x_feet = (self.x_feet, self.x_feet)
@@ -142,10 +139,7 @@ class HierarchicalGraph(Data):
             ix_max, ix_min = ix_max.squeeze(), ix_min.squeeze()
 
             x_frame = (min_frame, max_frame)
-            if config.formulation == 'flow':
-                x_frame_mask = None
-            elif config.formulation == 'cluster':
-                x_frame_mask = scatter_add(self.x_one_hot_frame, self.map_from_init, dim=0)
+            x_frame_mask = None
             x_bbox = (self.x_bbox[ix_min], self.x_bbox[ix_max])
             x_feet = (self.x_feet[ix_min], self.x_feet[ix_max])
             x_center = (self.x_center[ix_min], self.x_center[ix_max])
@@ -252,7 +246,6 @@ class HierarchicalGraph(Data):
 
         raw_edge_index = find_graph_time_valid_edges(node_frames=x_frame, node_frames_mask=x_frame_mask, 
                                                      depth=self.curr_depth, frames_per_level=self.frames_per_level, 
-                                                     formulation=config.formulation, 
                                                      connectivity=config.connectivity)
 
         curr_graph = Graph(x=x_node, edge_index=raw_edge_index, x_reid=x_reid,y_id=y_id,  
@@ -310,15 +303,13 @@ class HierarchicalGraph(Data):
             edge_ixs, edge_features = make_symmetric_edges(edge_ixs=edge_ixs, edge_features=edge_features)
 
         # LABELS - if train/val
-        if config.formulation == 'flow':
-            edge_labels, edge_mask = assign_edge_labels(node_ids=curr_graph.y_id, edge_ixs=edge_ixs, node_frames=x_frame)
+        edge_labels, edge_mask = assign_edge_labels(node_ids=curr_graph.y_id, edge_ixs=edge_ixs, node_frames=x_frame)
 
         # Placeholder for edge predictions
         edge_preds = torch.zeros((edge_features.shape[0]), dtype=edge_features.dtype)
 
         # Construct the current layer graph
-        if config.formulation == 'flow':
-            curr_graph = Graph(x=curr_graph.x, edge_attr=edge_features, edge_index=edge_ixs, edge_labels=edge_labels,
+        curr_graph = Graph(x=curr_graph.x, edge_attr=edge_features, edge_index=edge_ixs, edge_labels=edge_labels,
                                y_id=curr_graph.y_id,
                            edge_preds=edge_preds, x_reid=x_reid, edge_mask=edge_mask)
 

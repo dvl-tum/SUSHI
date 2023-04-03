@@ -3,7 +3,6 @@ from torch import nn
 
 from torch_scatter import scatter_mean, scatter_max, scatter_add
 from torch import nn
-from src.models.modules import TrajectoryEncoder
 from copy import deepcopy
 
 class MLP(nn.Module):
@@ -269,7 +268,6 @@ class MOTMPNet(nn.Module):
         self.num_enc_steps = model_params['num_enc_steps']
         self.num_class_steps = model_params['num_class_steps']
 
-        # self.trajectory_encoder = TrajectoryEncoder(**model_params['trajectory_encoder_params'])
         if model_params['do_hicl_feats']:
             self.hicl_feats_encoder= HiclFeatsEncoder(node_dim = encoder_feats_dict['node_out_dim'], 
                                                       **model_params['hicl_feats_encoder'])

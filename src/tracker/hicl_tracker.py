@@ -27,7 +27,6 @@ from TrackEval.scripts.run_mot_challenge import evaluate_mot17
 import matplotlib.pyplot as plt
 from torch import nn
 import math
-import rama_py
 import pickle
 from torch.utils.tensorboard.writer import SummaryWriter
 
@@ -379,16 +378,15 @@ class HICLTracker:
             if curr_depth < project_max_depth:  # Last layer update is not necessary for training
                 for ix_graph, graph in enumerate(graph_data_list):        
                     if graph.edge_index.numel():
-                        # Flow formulation
-                        if self.config.formulation == 'flow':
-                            # Process the graph before feeding it to the projector
-                            self._postprocess_graph(graph)
-                            # Project model output with a solver
-                            graph = self._project_graph(graph)
-                            
-                            # Assign ped ids
-                            n_components, labels = self._assign_labels(graph)
+
+                        # Process the graph before feeding it to the projector
+                        self._postprocess_graph(graph)
+                        # Project model output with a solver
+                        graph = self._project_graph(graph)
                         
+                        # Assign ped ids
+                        n_components, labels = self._assign_labels(graph)
+                    
                         node_mask = batch_idx == ix_graph
                         if self.config.do_hicl_feats and not oracle:
                             hicl_feats.append(self.model.layers[curr_depth].hicl_feats_encoder.pool_node_feats(outputs['node_feats'][node_mask], labels))

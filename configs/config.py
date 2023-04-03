@@ -4,7 +4,6 @@ import os
 import os.path as osp
 from datetime import datetime
 import math
-import rama_py
 
 def _store_bool(num):
     return bool(int(num))
@@ -48,7 +47,6 @@ def get_arguments(args=None):
     # EXPERIMENT
     parser.add_argument('--experiment_mode', help='train/test/train-cval/eval', type=str, required=True)  # What kind of an experiment will be conducted
     parser.add_argument('--run_id', help='identifier string for current experiment', type=str, default=None)
-    parser.add_argument('--formulation', help='Flow formulation(flow) or Correlation Clustering(cluster)', type=str, default='flow')
     parser.add_argument('--connectivity', help='chunk or full', type=str, default='chunk')
 
     # PATHS
@@ -136,8 +134,6 @@ def get_arguments(args=None):
 
     parser.add_argument('--rounding_method', help='Flow formulation solver', type=str, default='exact')  # Determines whether an LP is used for rounding ('exact') or a greedy heuristic ('greedy')
     parser.set_defaults(solver_backend='pulp')  # Determines package used to solve the LP, (Gurobi requires a license, pulp does not)
-    parser.add_argument('--rama_mode', help='RAMA mode (P, PD, PD+)', type=str,
-                        default='PD+')  # Determines whether an LP is used for rounding ('exact') or a greedy heuristic ('greedy')
     parser.add_argument('--no_interpolate', help='Do not interpolate missing detections of trajectories', dest='no_interpolate', action='store_true')
 
 
@@ -202,10 +198,6 @@ def post_config(config):
     config.VIDEO_COLUMNS = ['frame_path', 'frame', 'ped_id', 'bb_left', 'bb_top', 'bb_width', 'bb_height', 'bb_right', 'bb_bot']  # Columns to save in the output df
     config.TRACKING_OUT_COLS = ['frame', 'ped_id', 'bb_left', 'bb_top', 'bb_width', 'bb_height', 'conf', 'x', 'y', 'z']  # MotCha output format
 
-    # RAMA opt
-    config.rama_opt = rama_py.multicut_solver_options(config.rama_mode)
-    config.rama_opt.verbose = False
-
     # Motion things
     config.do_motion = max(config.mpn_use_motion)
 
@@ -218,7 +210,6 @@ def ensure_config_consistency(config):
     """
     assert config.experiment_mode in ("train", "train-cval", "test", "eval"), "Invalid experiment mode"
     if config.experiment_mode != 'eval':
-        assert config.formulation in ("flow", "cluster")
         assert config.connectivity in ("chunk", "full")
         if config.experiment_mode == "train":
             assert config.train_splits != [None] and len(config.train_splits) == 1 and len(config.val_splits) <= 1 and config.test_splits == [None], "Splits are not compatible with train mode"

@@ -19,8 +19,6 @@ from src.data.bdd.bdd import get_bdd_gt, get_bdd_det_df_from_det
 from src.utils.deterministic import seed_generator, seed_worker
 from src.models.reid.resnet import resnet50_fc256, resnet50_fc512, load_pretrained_weights
 from src.models.reid.fastreid_models import load_fastreid_model
-from src.models.reid.osnet_ain import osnet_ain_x1_0
-from src.models.reid.osnet import osnet_ibn_x1_0, osnet_x1_0
 from src.data.misc_datasets import BoundingBoxDataset
 from src.utils.graph_utils import iou
 import time
@@ -386,25 +384,7 @@ class MOTSeqProcessor:
         transforms = None
 
         print("REID ARCH??")
-        if self.config.reid_arch == 'osnet_ain':
-            print("OSNET AIN MODEL!!")
-            num_classes = 1000
-            feature_embedding_model = osnet_ain_x1_0(num_classes=num_classes, loss='xent', pretrained=False).to(self.config.device)
-            load_pretrained_weights(feature_embedding_model, self.config.feature_embedding_model_path)
-
-        elif self.config.reid_arch == 'osnet':
-            print("OSNET REGULAR MODEL!!")
-            num_classes = 1000
-            feature_embedding_model = osnet_x1_0(num_classes=num_classes, loss='xent', pretrained=False).to(self.config.device)
-            load_pretrained_weights(feature_embedding_model, self.config.feature_embedding_model_path)
-
-        elif self.config.reid_arch == 'osnet_ibn':
-            print("OSNET IBN MODEL!!")
-            num_classes = 1000
-            feature_embedding_model = osnet_ibn_x1_0(num_classes=num_classes, loss='xent', pretrained=False).to(self.config.device)
-            load_pretrained_weights(feature_embedding_model, self.config.feature_embedding_model_path)
-
-        elif self.config.reid_arch == 'resnet50_fc512':
+        if self.config.reid_arch == 'resnet50_fc512':
             print("RESNET 50 fc512!!")
             feature_embedding_model = resnet50_fc512(num_classes=1000, loss='xent', pretrained=True).to(self.config.device)
             load_pretrained_weights(feature_embedding_model, self.config.feature_embedding_model_path)
