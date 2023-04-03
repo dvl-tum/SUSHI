@@ -1,0 +1,16 @@
+/output/
+/.idea/
+/data/
+/models/
+.vscode/
+**.sbatch
+**.out
+**.pth
+**.sbatch.**
+**/**.pyc
+**/__pycache/
+/TrackEval/error_log.txt
+/fast-reid
+/logs
+/TrackEval/data/
+/TrackEval/data.zip

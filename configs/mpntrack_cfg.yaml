@@ -1,0 +1,53 @@
+graph_model_params:
+  node_agg_fn: 'sum'
+  num_enc_steps: 12  # Number of message passing steps
+  num_class_steps: 11  # Number of message passing steps during feature vectors are classified (after Message Passing)
+  reattach_initial_nodes: False  # Determines whether initially encoded node feats are used during node updates
+  reattach_initial_edges: True  # Determines whether initially encoded edge feats are used during node updates
+  do_hicl_feats: False
+
+  hicl_feats_encoder:
+    ignore_mpn_out: True # If true, you ignore the MPN output, you return as 'hierarchical features' the input ones
+    detach_hicl_grad: False
+    merge_method: 'cat'
+    skip_conn: False # If true, a skip connection across MPN output is used. If False, only the MPN output is returned
+    use_layerwise: False
+
+  encoder_feats_dict:
+    edge_in_dim: 6
+    edge_fc_dims: [18, 18]
+    edge_out_dim: 16
+    node_in_dim: 2048
+    #node_fc_dims: [512, 128]
+    node_fc_dims: [128]
+    node_out_dim: 32
+    dropout_p: 0
+    use_batchnorm: False
+
+  edge_model_feats_dict:
+    fc_dims: [80, 16] # In size is 4 * encoded nodes + 2 * encoded edges
+    dropout_p: 0
+    use_batchnorm: False
+
+  # In size is 2 * encoded nodes + 1 * encoded edges
+  node_model_feats_dict:
+    fc_dims: [56, 32]
+    dropout_p: 0
+    use_batchnorm: False
+
+  classifier_feats_dict:
+    edge_in_dim: 16
+    edge_fc_dims: [8]
+    edge_out_dim: 1
+    dropout_p: 0
+    use_batchnorm: False
+
+  cnn_params:
+    arch: resnet50
+    model_weights_path:
+      resnet50: trained_models/reid/resnet50_market_cuhk_duke.tar-232
+
+  trajectory_encoder_params:
+    input_dim: 0
+    fc_dim: 64
+    out_dim: 32

@@ -39,7 +39,14 @@ Tracking  objects over long videos effectively means solving a spectrum of probl
 
 1: Clone and enter the repo
 2: Create an anaconda environment
-3: Setup fast-reid
+
+3. Clone [fast-reid](https://github.com/JDAI-CV/fast-reid) (latest version should be compatible but we use [this](https://github.com/JDAI-CV/fast-reid/tree/afe432b8c0ecd309db7921b7292b2c69813d0991) version) and install its dependencies. The `fast-reid` repo should be inside `SUSHI` root:
+```
+SUSHI
+  ├── src
+  ├── fast-reid
+  └── ...
+```
 
 4. Download [MOT17](https://motchallenge.net/data/MOT17/), [MOT20](https://motchallenge.net/data/MOT20/) and [DanceTrack](https://dancetrack.github.io/) datasets. In addition, prepare seqmaps to run evaluation (for details see [TrackEval](https://github.com/JonathonLuiten/TrackEval)). We provide an example seqmap here (TODO). Overall, the expected folder structure is: 
 
