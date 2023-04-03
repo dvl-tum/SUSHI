@@ -49,6 +49,6 @@ class Postprocessor:
     def postprocess_trajectories(self):
         # Indices needs to be in order!! Reset index if you encounter bugs.
         self.drop_short_trajectories()
-        if len(self.traj_df):
+        if len(self.traj_df) and (not self.config.no_interpolate):
             self.interpolate_trajectories()
         return self.traj_df

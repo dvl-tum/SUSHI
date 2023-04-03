@@ -98,7 +98,7 @@ REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 
 DATA_PATH=YOUR_DATA_PATH
 
-python scripts/main.py --experiment_mode train --cuda --train_splits mot17-train-all --val_splits mot17-train-all --frames_per_graph 512 --top_k_nns 10 --hicl_depth 9 --frames_per_level 2 4 8 16 32 64 128 256 512 --depth_pretrain_iteration 500 --run_id ${RUN}_${REID_ARCH} --motion_pred_length 2 4 8 16 32 64 128 256 --motion_max_length 2 4 8 16 32 64 128 256 --interpolate_motion --mpn_use_vel_feats 0 0 0 0 0 0 0 0 0  --mpn_use_baseline_feats 0 0 0 0 0 0 0 0 0 --linear_center_only --pruning_method geometry motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 --det_file byte065 --mpn_use_reid_edge 1 1 1 1 1 1 1 1 1 --mpn_use_pos_edge 1 1 1 1 1 1 1 1 1 --mpn_use_motion 0 1 1 1 1 1 1 1 1 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --share_weights all_but_first --reid_arch $REID_ARCH --edge_level_embed --save_cp
+python scripts/main.py --experiment_mode train --cuda --train_splits mot17-train-all --val_splits mot17-train-all --run_id ${RUN}_${REID_ARCH} --interpolate_motion --linear_center_only --det_file byte065 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp
 ```
 
 
@@ -112,7 +112,7 @@ REID_ARCH='fastreid_msmt_BOT_R50_ibn'
 DATA_PATH=your_data_path
 PRETRAINED_MODEL_PATH=your_pretrained_model_path
 
-python scripts/main.py --experiment_mode test --cuda --test_splits mot17-train-all --frames_per_graph 512 --top_k_nns 10 --hicl_depth 9 --frames_per_level 2 4 8 16 32 64 128 256 512 --depth_pretrain_iteration 500 --run_id ${RUN}_${REID_ARCH} --motion_pred_length 2 4 8 16 32 64 128 256 --motion_max_length 2 4 8 16 32 64 128 256 --interpolate_motion --mpn_use_vel_feats 0 0 0 0 0 0 0 0 0  --mpn_use_baseline_feats 0 0 0 0 0 0 0 0 0 --linear_center_only --pruning_method geometry motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 motion_005 --det_file byte065 --mpn_use_reid_edge 1 1 1 1 1 1 1 1 1 --mpn_use_pos_edge 1 1 1 1 1 1 1 1 1 --mpn_use_motion 0 1 1 1 1 1 1 1 1 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --share_weights all_but_first --reid_arch $REID_ARCH --edge_level_embed --save_cp --hicl_model_path ${PRETRAINED_MODEL_PATH}
+python scripts/main.py --experiment_mode test --cuda --test_splits mot17-train-all --run_id ${RUN}_${REID_ARCH} --interpolate_motion --linear_center_only --det_file byte065 --data_path ${DATA_PATH} --reid_embeddings_dir reid_${REID_ARCH} --node_embeddings_dir node_${REID_ARCH} --zero_nodes --reid_arch $REID_ARCH --edge_level_embed --save_cp --hicl_model_path ${PRETRAINED_MODEL_PATH}
 ```
 
 Launching this experiment with our MOT17 Private model should result in: `90.826 IDF1`, `80.884 HOTA` and `91.953 MOTA`. 
