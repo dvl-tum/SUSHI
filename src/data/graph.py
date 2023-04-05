@@ -1,7 +1,7 @@
 import torch
 from torch_geometric.data import Data
 import numpy as np
-from src.utils.graph_utils import find_graph_time_valid_edges, prune_edges, compute_edge_features, assign_edge_labels, make_symmetric_edges, assign_node_ids
+from src.utils.graph_utils import find_graph_time_valid_edges, prune_edges, compute_edge_features, assign_edge_labels, make_symmetric_edges, assign_node_ids, assign_node_classes
 from src.utils.motion_utils import  torch_get_motion_feats
 from torch_scatter import scatter_mean, scatter_max, scatter_min, scatter_add
 from torch.nn.utils.rnn import pad_sequence
@@ -35,7 +35,8 @@ class Graph(Data):
                            'edge_preds', # Predicted approximation to edge labels
                            'reid_emb_dists', # Reid distance for each edge
                            'conf_edge_index',
-                           'edge_mask'] # Conflicting edge indices
+                           'edge_mask',
+                           'x_classes']
 
         for attr_name in _data_attr_names:
             if hasattr(self, attr_name):
@@ -128,6 +129,7 @@ class HierarchicalGraph(Data):
             x_center = (self.x_center, self.x_center)
             x_feet = (self.x_feet, self.x_feet)
             y_id = self.y_id
+            x_cls = self.x_classes
         else:
             # Node and reid features are the average of those from the initial layer
             x_node = scatter_mean(self.x_node, self.map_from_init, dim=0)
@@ -140,15 +142,16 @@ class HierarchicalGraph(Data):
 
             x_frame = (min_frame, max_frame)
             x_frame_mask = None
-            x_bbox = (self.x_bbox[ix_min], self.x_bbox[ix_max])
-            x_feet = (self.x_feet[ix_min], self.x_feet[ix_max])
-            x_center = (self.x_center[ix_min], self.x_center[ix_max])
+            x_bbox = (self.x_bbox[ix_min].view(-1, 4), self.x_bbox[ix_max].view(-1, 4))
+            x_feet = (self.x_feet[ix_min].view(-1, 2), self.x_feet[ix_max].view(-1, 2))
+            x_center = (self.x_center[ix_min].view(-1, 2), self.x_center[ix_max].view(-1, 2))
 
             # Obtain new node ids from initials
             y_id = assign_node_ids(init_node_ids=self.y_id, map_from_init=self.map_from_init,
                                    threshold=config.node_id_min_ratio)
+            x_cls = assign_node_classes(init_node_classes=self.x_classes, map_from_init=self.map_from_init)
 
-        return x_node, x_reid, x_frame, x_frame_mask, x_bbox, x_feet, x_center, y_id
+        return x_node, x_reid, x_frame, x_frame_mask, x_bbox, x_feet, x_center, y_id, x_cls
 
     def _get_track_features(self, config):
         # init x_track and x_track_length
@@ -223,7 +226,7 @@ class HierarchicalGraph(Data):
 
     def construct_curr_graph_nodes(self, config):
         # Get current level features and labels
-        x_node, x_reid, x_frame, x_frame_mask, x_bbox, x_feet, x_center, y_id = self._get_curr_graph_specs(config)
+        x_node, x_reid, x_frame, x_frame_mask, x_bbox, x_feet, x_center, y_id, x_cls = self._get_curr_graph_specs(config)
 
         #if config.zero_nodes:
         if config.zero_nodes:
@@ -246,7 +249,7 @@ class HierarchicalGraph(Data):
 
         raw_edge_index = find_graph_time_valid_edges(node_frames=x_frame, node_frames_mask=x_frame_mask, 
                                                      depth=self.curr_depth, frames_per_level=self.frames_per_level, 
-                                                     connectivity=config.connectivity)
+                                                     connectivity=config.connectivity, node_classes=x_cls, multiclass=config.multiclass)
 
         curr_graph = Graph(x=x_node, edge_index=raw_edge_index, x_reid=x_reid,y_id=y_id,  
                             fwrd_vel=fwrd_vel, bwrd_vel=bwrd_vel, 
@@ -361,6 +364,7 @@ class HierarchicalGraph(Data):
                             'x_center',  # Bonuding box center coordinates of the node
                             'x_feet',  # Further bbox coordinates (feet_x, feet_y)
                             'y_id',  # GT identity of the node
+                            'x_classes',
 
                             # Scene related
                             'fps',  # FPS of the sequence

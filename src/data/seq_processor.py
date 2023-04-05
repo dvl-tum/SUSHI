@@ -22,6 +22,7 @@ from src.models.reid.fastreid_models import load_fastreid_model
 from src.data.misc_datasets import BoundingBoxDataset
 from src.utils.graph_utils import iou
 import time
+from configs.config import get_arguments
 
 # ################################### SETUP ###################################
 # Loader functions for the sequence type
@@ -61,7 +62,11 @@ for seq_name in dancetrack_seqs:
 
 
 #--------- BDD ---------
-bdd_seqs = [f'{seq_name}' for seq_name in ('b1c66a42-6f7d68ca', 'b1c81faa-3df17267', 'b1c81faa-c80764c5', 'b1c9c847-3bda4659')]
+bdd_path = '/storage/slurm/cetintas/BDD'
+train_seqs = sorted(os.listdir(osp.join(bdd_path, 'train')))
+val_seqs = sorted(os.listdir(osp.join(bdd_path, 'val')))
+test_seqs = sorted(os.listdir(osp.join(bdd_path, 'test')))
+bdd_seqs = train_seqs + val_seqs + test_seqs
 for seq_name in bdd_seqs:
     _SEQ_TYPES[seq_name] = 'MOT_BDD'
 
@@ -206,25 +211,50 @@ class MOTSeqProcessor:
         """
         if self.det_df.seq_info_dict['has_gt'] and not self.det_df.seq_info_dict['is_gt']:
             print(f"Assigning ground truth identities to detections to sequence {self.seq_name}")
-            for frame in self.det_df['frame'].unique():
-                frame_detects = self.det_df[self.det_df.frame == frame]
-                frame_gt = self.gt_df[self.gt_df.frame == frame]
+            if not self.config.multiclass:
+                for frame in self.det_df['frame'].unique():
+                    frame_detects = self.det_df[self.det_df.frame == frame]
+                    frame_gt = self.gt_df[self.gt_df.frame == frame]
 
-                # Compute IoU for each pair of detected / GT bounding box
-                iou_matrix = iou(frame_detects[['bb_top', 'bb_left', 'bb_bot', 'bb_right']].values,
-                                 frame_gt[['bb_top', 'bb_left', 'bb_bot', 'bb_right']].values)
+                    # Compute IoU for each pair of detected / GT bounding box
+                    iou_matrix = iou(frame_detects[['bb_top', 'bb_left', 'bb_bot', 'bb_right']].values,
+                                    frame_gt[['bb_top', 'bb_left', 'bb_bot', 'bb_right']].values)
 
-                iou_matrix[iou_matrix < self.config.gt_assign_min_iou] = np.nan
-                dist_matrix = 1 - iou_matrix
-                assigned_detect_ixs, assigned_detect_ixs_ped_ids = solve_dense(dist_matrix)
-                unassigned_detect_ixs = np.array(list(set(range(frame_detects.shape[0])) - set(assigned_detect_ixs)))
+                    iou_matrix[iou_matrix < self.config.gt_assign_min_iou] = np.nan
+                    dist_matrix = 1 - iou_matrix
+                    assigned_detect_ixs, assigned_detect_ixs_ped_ids = solve_dense(dist_matrix)
+                    unassigned_detect_ixs = np.array(list(set(range(frame_detects.shape[0])) - set(assigned_detect_ixs)))
 
-                assigned_detect_ixs_index = frame_detects.iloc[assigned_detect_ixs].index
-                assigned_detect_ixs_ped_ids = frame_gt.iloc[assigned_detect_ixs_ped_ids]['id'].values
-                unassigned_detect_ixs_index = frame_detects.iloc[unassigned_detect_ixs].index
+                    assigned_detect_ixs_index = frame_detects.iloc[assigned_detect_ixs].index
+                    assigned_detect_ixs_ped_ids = frame_gt.iloc[assigned_detect_ixs_ped_ids]['id'].values
+                    unassigned_detect_ixs_index = frame_detects.iloc[unassigned_detect_ixs].index
 
-                self.det_df.loc[assigned_detect_ixs_index, 'id'] = assigned_detect_ixs_ped_ids
-                self.det_df.loc[unassigned_detect_ixs_index, 'id'] = -1  # False Positives
+                    self.det_df.loc[assigned_detect_ixs_index, 'id'] = assigned_detect_ixs_ped_ids
+                    self.det_df.loc[unassigned_detect_ixs_index, 'id'] = -1  # False Positives
+            else:
+                for frame in self.det_df['frame'].unique():
+                    all_frame_detects = self.det_df[self.det_df.frame == frame]
+                    all_frame_gt = self.gt_df[self.gt_df.frame == frame]
+                    for c in all_frame_detects['label'].unique():
+                        frame_detects = all_frame_detects[all_frame_detects.label == c]
+                        frame_gt = all_frame_gt[all_frame_gt.label == c]
+
+                        # Compute IoU for each pair of detected / GT bounding box
+                        iou_matrix = iou(frame_detects[['bb_top', 'bb_left', 'bb_bot', 'bb_right']].values,
+                                        frame_gt[['bb_top', 'bb_left', 'bb_bot', 'bb_right']].values)
+
+                        iou_matrix[iou_matrix < self.config.gt_assign_min_iou] = np.nan
+                        dist_matrix = 1 - iou_matrix
+                        assigned_detect_ixs, assigned_detect_ixs_ped_ids = solve_dense(dist_matrix)
+                        unassigned_detect_ixs = np.array(list(set(range(frame_detects.shape[0])) - set(assigned_detect_ixs)))
+
+                        assigned_detect_ixs_index = frame_detects.iloc[assigned_detect_ixs].index
+                        assigned_detect_ixs_ped_ids = frame_gt.iloc[assigned_detect_ixs_ped_ids]['id'].values
+                        unassigned_detect_ixs_index = frame_detects.iloc[unassigned_detect_ixs].index
+
+                        self.det_df.loc[assigned_detect_ixs_index, 'id'] = assigned_detect_ixs_ped_ids
+                        self.det_df.loc[unassigned_detect_ixs_index, 'id'] = -1  # False Positives
+
 
     def _store_dfs(self):
         """

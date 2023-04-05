@@ -30,9 +30,29 @@ def assign_node_ids(init_node_ids, map_from_init, threshold):
 
     return y_id.view(-1, 1)
 
+def assign_node_classes(init_node_classes, map_from_init):
+    """
+    Node id is the most common id within a node greater than a threshold. Otherwise it is -1 (ambiguous)
+    """
+
+    # Normalize y_id between 0 and max_id so that we can feed it to F.one_hot
+    cls_unique, cls_clusters = torch.unique(init_node_classes, return_inverse=True)
+    cls_clusters = cls_clusters.squeeze()
+
+    # One hot encode each label and scatter add. We have node to id occurence map
+    cls_one_hot = F.one_hot(cls_clusters)  # One hot ids
+    cluster_total_cls = scatter_add(cls_one_hot, map_from_init, dim=0)
+
+    # Get the id with most occurences and the total number to calculate the percentage
+    _, cluster_max_ix = torch.max(cluster_total_cls, dim=1)
+
+    # Find the correspondences of max_ixs in the original y_id labels
+    x_cls = cls_unique[cluster_max_ix]
+
+    return x_cls.view(-1, 1)
 
 
-def find_graph_time_valid_edges(node_frames, node_frames_mask, depth, frames_per_level, connectivity, pruning_method=['geometry', 'reid', 'reid']):
+def find_graph_time_valid_edges(node_frames, node_frames_mask, depth, frames_per_level, connectivity, node_classes, multiclass):
 
     """
     Return edge connections of a graph from node features. Edges need to be within a valid time distance.
@@ -45,15 +65,11 @@ def find_graph_time_valid_edges(node_frames, node_frames_mask, depth, frames_per
 
     edge_ixs: torch.Tensor with shape (2, num_edges) corresponding to the valid edges
     """
-    if isinstance(pruning_method, str):
-        pruning_method = (depth + 1)*[pruning_method]
-    
-    assert isinstance(pruning_method, (list, tuple))
 
     # Ensure that nodes are sorted according to their starting frame
     assert (torch.sort(node_frames[0])[0] == node_frames[0]).all(), "Nodes are NOT sorted by starting frame. Graph was not created properly!"
 
-    edge_ixs = find_time_valid_connections_flowchunk(node_frames=node_frames, depth=depth, frames_per_level=frames_per_level)
+    edge_ixs = find_time_valid_connections_flowchunk(node_frames=node_frames, depth=depth, frames_per_level=frames_per_level, node_classes=node_classes, multiclass=multiclass)
 
     return edge_ixs
 
@@ -71,7 +87,7 @@ def prune_edges(edge_ixs, node_frames, node_reids, top_k_nns, depth, node_feets,
 
 
 
-def find_time_valid_connections_flowchunk(node_frames, depth, frames_per_level):
+def find_time_valid_connections_flowchunk(node_frames, depth, frames_per_level, node_classes, multiclass):
     """
     All time valid connections of a graph. Nodes from consecutive splits are merged together. This time, non conflicting
     nodes from the same split are also merged together. So lower layer bad decisions can be recovered.
@@ -101,12 +117,20 @@ def find_time_valid_connections_flowchunk(node_frames, depth, frames_per_level):
     edge_ixs = []
     for large_start_ix, large_end_ix in zip(large_cluster_changepoints[:-1], large_cluster_changepoints[1:]):
         cluster_end_frames = torch.unique(end_frames[large_start_ix:large_end_ix])
+        cluster_classes = torch.unique(node_classes[large_start_ix:large_end_ix])
         # Loop over the end frames
         for end_f in cluster_end_frames:
-            pasts = torch.where(end_frames[large_start_ix:large_end_ix] == end_f)[0] + large_start_ix  # Find the indices of nodes that ends at end_f
-            currs = torch.where(start_frames[large_start_ix:large_end_ix] > end_f)[0] + large_start_ix  # Find the indices of nodes that start after end_f
-            if pasts.numel() and currs.numel():
-                edge_ixs.append(torch.cartesian_prod(pasts, currs))
+            if multiclass:
+                for c in cluster_classes:
+                    pasts = torch.where(torch.logical_and(end_frames[large_start_ix:large_end_ix] == end_f, node_classes[large_start_ix:large_end_ix] == c))[0] + large_start_ix  # Find the indices of nodes that ends at end_f
+                    currs = torch.where(torch.logical_and(start_frames[large_start_ix:large_end_ix] > end_f, node_classes[large_start_ix:large_end_ix] == c))[0] + large_start_ix  # Find the indices of nodes that start after end_f
+                    if pasts.numel() and currs.numel():
+                        edge_ixs.append(torch.cartesian_prod(pasts, currs))
+            else:
+                pasts = torch.where(end_frames[large_start_ix:large_end_ix] == end_f)[0] + large_start_ix  # Find the indices of nodes that ends at end_f
+                currs = torch.where(start_frames[large_start_ix:large_end_ix] > end_f)[0] + large_start_ix  # Find the indices of nodes that start after end_f
+                if pasts.numel() and currs.numel():
+                    edge_ixs.append(torch.cartesian_prod(pasts, currs))
 
     if edge_ixs:
         edge_ixs = torch.cat(edge_ixs).T

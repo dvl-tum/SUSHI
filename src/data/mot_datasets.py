@@ -202,12 +202,14 @@ class MOTSceneDataset:
         x_bbox = torch.tensor(graph_df[['detection_id', 'bb_left', 'bb_top', 'bb_width', 'bb_height']].values)
         x_feet = torch.tensor(graph_df[['detection_id', 'feet_x', 'feet_y']].values)
         y_id = torch.tensor(graph_df[['detection_id', 'id']].values)
+        x_cls = torch.tensor(graph_df[['detection_id', 'label']].values)
 
         # Assert that order of all the loaded values are the same
         assert (x_reid[:, 0].numpy() == y_id[:, 0].numpy()).all() and \
                (x_node[:, 0].numpy() == y_id[:, 0].numpy()).all() and \
                (x_frame[:, 0].numpy() == y_id[:, 0].numpy()).all() and \
                (x_bbox[:, 0].numpy() == y_id[:, 0].numpy()).all() and \
+               (x_cls[:, 0].numpy() == y_id[:, 0].numpy()).all() and \
                (x_feet[:, 0].numpy() == y_id[:, 0].numpy()).all(), "Feature and id mismatch while loading"
 
         # Get rid of the detection id index
@@ -218,6 +220,7 @@ class MOTSceneDataset:
         x_center = x_bbox[:, :2] + 0.5* x_bbox[:, 2:]
         x_feet = x_feet[:, 1:]
         y_id = y_id[:, 1:]
+        x_cls = x_cls[:, 1:]
 
         if self.config.l2_norm_reid:
             x_reid = F.normalize(x_reid, dim = -1, p=2)
@@ -236,7 +239,7 @@ class MOTSceneDataset:
                                                x_bbox=x_bbox.float(), x_feet=x_feet.float(), x_center=x_center.float(), 
                                                y_id=y_id.long(), fps=fps.long(), frames_total=frames_total.long(),
                                                frames_per_level=frames_per_level.long(), 
-                                               start_frame=start_frame.long(), end_frame=end_frame.long())
+                                               start_frame=start_frame.long(), end_frame=end_frame.long(), x_classes=x_cls.long())
 
         return hierarchical_graph
 

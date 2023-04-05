@@ -22,14 +22,24 @@ def get_bdd_det_df_from_det(seq_name, data_root_path, config):
 
     # Get specific classes
     det_df['label'] += 1  # Detections include index so start from 0. BDD classes start from 1. 
-    det_df = det_df[det_df['label'].isin([1])].copy()
+    det_df = det_df[det_df['label'].isin([1, 2, 3, 4, 5, 6, 7, 8])].copy()
 
+    if config.det_file == 'byte_pedestrian':
+        det_df = det_df[det_df['label'].isin([1])].copy()
+
+    # Conf threshold
     # Conf threshold
     if config.det_file == 'yolo_cascadebdd100k_cls_score':
         det_df = det_df[det_df['conf'].ge(0.65)].copy()
+    elif config.det_file == 'dets_bdd_byte':
+        det_df = det_df[det_df['conf'].ge(0.35)].copy()
+    elif config.det_file == 'byte_pedestrian':
+        det_df = det_df[det_df['conf'].ge(0.35)].copy()
+    else:
+        assert config.det_file in ('dets_bdd_byte', 'byte_pedestrian')
 
     # Fix the frame number and sort
-    det_df['frame'] = det_df['frame'].apply(lambda frame_num: int(frame_num.split('-')[-1]))
+    # det_df['frame'] = det_df['frame'].apply(lambda frame_num: int(frame_num.split('-')[-1]))
     det_df = det_df.sort_values(by=['frame'])
 
 
@@ -74,7 +84,8 @@ def get_bdd_gt(seq_name, data_root_path, config):
     gt_df.columns = GT_COL_NAMES
 
     # Clean out unnecessary classes
-    gt_df = gt_df[gt_df['label'].isin([1, 2])].copy()  # Classes 7, 8, 12 are 'ambiguous' and are not penalized. Let's keep them for now.
+    # gt_df = gt_df[gt_df['label'].isin([1, 2])].copy()  # Classes 7, 8, 12 are 'ambiguous' and are not penalized. Let's keep them for now.
+    gt_df = gt_df[gt_df['label'].isin([1, 2, 3, 4, 5, 6, 7, 8])].copy()
 
     # Extra bbox values that will be used for id matching
     gt_df['bb_bot'] = (gt_df['bb_top'] + gt_df['bb_height']).values

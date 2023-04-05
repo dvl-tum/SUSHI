@@ -1,4 +1,5 @@
 import os.path as osp
+import os
 
 
 def get_seqs_from_splits(data_path, train_split=None, val_split=None, test_split=None):
@@ -64,6 +65,18 @@ def get_seqs_from_splits(data_path, train_split=None, val_split=None, test_split
     # BDD
     ########
     _SPLITS['bdd-val-debug'] = {'BDD/val': [f'{seq_name}' for seq_name in ('b1c66a42-6f7d68ca', 'b1c9c847-3bda4659')]}
+    train_seqs = sorted(os.listdir(osp.join(data_path, 'BDD/train')))
+    val_seqs = sorted(os.listdir(osp.join(data_path, 'BDD/val')))
+    test_seqs = sorted(os.listdir(osp.join(data_path, 'BDD/test')))
+    assert len(train_seqs) == 1400
+    assert len(val_seqs) == 200
+    assert len(test_seqs) == 400
+
+    _SPLITS['bdd-val-debug'] = {'BDD/val': [f'{seq_name}' for seq_name in ('b1c9c847-3bda4659', )]}
+
+    _SPLITS['bdd-train-all'] = {'BDD/train': [f'{seq_name}' for seq_name in train_seqs]}
+    _SPLITS['bdd-val-all'] = {'BDD/val': [f'{seq_name}' for seq_name in val_seqs]}
+    _SPLITS['bdd-test-all'] = {'BDD/test': [f'{seq_name}' for seq_name in test_seqs]}
 
 
     # Ensure that split is valid

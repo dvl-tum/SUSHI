@@ -4,6 +4,7 @@ from src.tracker.hicl_tracker import HICLTracker
 from src.data.splits import get_seqs_from_splits
 import os.path as osp
 from TrackEval.scripts.run_mot_challenge import evaluate_mot17
+from TrackEval.scripts.run_bdd import evaluate_bdd
 import time
 import torch
 
@@ -67,7 +68,7 @@ if __name__ == "__main__":
                                                                      oracle=False)
                
         # Only works if you are testing on train or val data. Will fail in case of a test set
-        evaluate_mot17(tracker_path=osp.join(hicl_tracker.config.experiment_path, 'test'), split=hicl_tracker.test_split,
+        evaluate_bdd(tracker_path=osp.join(hicl_tracker.config.experiment_path, 'test'), split=hicl_tracker.test_split,
                    data_path=hicl_tracker.config.data_path,
                    tracker_sub_folder=hicl_tracker.config.mot_sub_folder,
                    output_sub_folder=hicl_tracker.config.mot_sub_folder)

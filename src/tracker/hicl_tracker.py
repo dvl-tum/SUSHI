@@ -24,11 +24,15 @@ import time
 import statistics
 import os
 from TrackEval.scripts.run_mot_challenge import evaluate_mot17
+from TrackEval.scripts.run_bdd import evaluate_bdd
 import matplotlib.pyplot as plt
 from torch import nn
 import math
 import pickle
 from torch.utils.tensorboard.writer import SummaryWriter
+import json
+import matplotlib.image as mpimg
+
 
 class HICLTracker:
     """
@@ -445,6 +449,25 @@ class HICLTracker:
                         self.logger.add_scalar(tag, metric_val, global_step=self.train_iteration)
 
 
+    def _log_tb_mot_metrics_bdd(self, mot_metrics):
+            if self.logger is not None:
+                path = list(mot_metrics['BDD100K'].keys())[0]
+                _METRICS_GROUPS = ['HOTA', 'CLEAR', 'Identity']
+                _METRICS_TO_LOG = ['HOTA', 'MOTA', 'IDF1']
+                _CLASSES = ['cls_comb_cls_av', 'cls_comb_det_av']
+
+                for c in _CLASSES:
+                    metrics_ = mot_metrics['BDD100K'][path]['COMBINED_SEQ'][c]
+                    for metrics_group_name in _METRICS_GROUPS:
+                        group_metrics = metrics_[metrics_group_name]
+                        for metric_name, metric_val in group_metrics.items():
+                            if metric_name in _METRICS_TO_LOG:
+                                if isinstance(metric_val, np.ndarray):
+                                    metric_val = np.mean(metric_val)
+                                tag = '/'.join(['val', 'mot', c+metric_name])
+                                self.logger.add_scalar(tag, metric_val, global_step=self.train_iteration)
+
+
     def train(self):
         """
         Perform a full training
@@ -454,9 +477,14 @@ class HICLTracker:
         if self.val_split:
         #if False:
             _, _ = self.track(self.val_dataset, output_path=osp.join(self.config.experiment_path, 'oracle'), mode='val', oracle=True)
-            evaluate_mot17(tracker_path=osp.join(self.config.experiment_path, 'oracle'), split=self.val_split,
-                           data_path=self.config.data_path, tracker_sub_folder=self.config.mot_sub_folder,
-                           output_sub_folder=self.config.mot_sub_folder)
+            if 'bdd' in self.val_split:
+                evaluate_bdd(tracker_path=osp.join(self.config.experiment_path, 'oracle'), split=self.val_split,
+                            data_path=self.config.data_path, tracker_sub_folder=self.config.mot_sub_folder,
+                            output_sub_folder=self.config.mot_sub_folder)
+            else:
+                evaluate_mot17(tracker_path=osp.join(self.config.experiment_path, 'oracle'), split=self.val_split,
+                            data_path=self.config.data_path, tracker_sub_folder=self.config.mot_sub_folder,
+                            output_sub_folder=self.config.mot_sub_folder)
         #raise RuntimeError
         assert self.model.training, "Training error: Model is not in training mode"
 
@@ -499,9 +527,15 @@ class HICLTracker:
                 self._log_tb_class_metrics(epoch_val_logs, epoc_val_logs_per_depth)
 
                 # MOT metrics
-                mot_metrics= evaluate_mot17(tracker_path=epoch_path, split=self.val_split, data_path=self.config.data_path,
-                                            tracker_sub_folder=self.config.mot_sub_folder, output_sub_folder=self.config.mot_sub_folder)[0]
-                self._log_tb_mot_metrics(mot_metrics) 
+                if 'bdd' in self.val_split:
+                    mot_metrics = evaluate_bdd(tracker_path=epoch_path, split=self.val_split, data_path=self.config.data_path,
+                                tracker_sub_folder=self.config.mot_sub_folder, output_sub_folder=self.config.mot_sub_folder)[0]
+                    self._log_tb_mot_metrics_bdd(mot_metrics)
+                else:
+                    mot_metrics = evaluate_mot17(tracker_path=epoch_path, split=self.val_split, data_path=self.config.data_path,
+                                tracker_sub_folder=self.config.mot_sub_folder, output_sub_folder=self.config.mot_sub_folder)[0]
+                    
+                    self._log_tb_mot_metrics(mot_metrics) 
 
             # Plot losses
             self._plot_losses(logs)
@@ -637,42 +671,43 @@ class HICLTracker:
 
             intersect_frames = np.intersect1d(seq_df.frame, subseq_df.frame)  # Common frames between 2 dfs
 
-            # Detections in common frames within seq_df
-            left_df = seq_df[['detection_id', 'ped_id']][seq_df.frame.isin(intersect_frames)]
-            left_ids_pos = left_df[['ped_id']].drop_duplicates();
-            left_ids_pos['ped_id_pos'] = np.arange(left_ids_pos.shape[0])
-            left_df = left_df.merge(left_ids_pos, on='ped_id').set_index('detection_id')
+            if len(intersect_frames):
+                # Detections in common frames within seq_df
+                left_df = seq_df[['detection_id', 'ped_id']][seq_df.frame.isin(intersect_frames)]
+                left_ids_pos = left_df[['ped_id']].drop_duplicates();
+                left_ids_pos['ped_id_pos'] = np.arange(left_ids_pos.shape[0])
+                left_df = left_df.merge(left_ids_pos, on='ped_id').set_index('detection_id')
 
-            # Detections in common frames within subseq_df
-            right_df = subseq_df[['detection_id', 'ped_id']][subseq_df.frame.isin(intersect_frames)]
-            right_ids_pos = right_df[['ped_id']].drop_duplicates();
-            right_ids_pos['ped_id_pos'] = np.arange(right_ids_pos.shape[0])
-            right_df = right_df.merge(right_ids_pos, on='ped_id').set_index('detection_id')
+                # Detections in common frames within subseq_df
+                right_df = subseq_df[['detection_id', 'ped_id']][subseq_df.frame.isin(intersect_frames)]
+                right_ids_pos = right_df[['ped_id']].drop_duplicates();
+                right_ids_pos['ped_id_pos'] = np.arange(right_ids_pos.shape[0])
+                right_df = right_df.merge(right_ids_pos, on='ped_id').set_index('detection_id')
 
-            # Count how many times each left_id corresponds to right_id (based on detection_id)
-            common_boxes = \
-                left_df[['ped_id_pos']].join(right_df['ped_id_pos'], lsuffix='_left', rsuffix='_right').dropna(
-                    thresh=2).reset_index().groupby(['ped_id_pos_left', 'ped_id_pos_right'])['detection_id'].count()
-            common_boxes = common_boxes.reset_index().astype(int)
+                # Count how many times each left_id corresponds to right_id (based on detection_id)
+                common_boxes = \
+                    left_df[['ped_id_pos']].join(right_df['ped_id_pos'], lsuffix='_left', rsuffix='_right').dropna(
+                        thresh=2).reset_index().groupby(['ped_id_pos_left', 'ped_id_pos_right'])['detection_id'].count()
+                common_boxes = common_boxes.reset_index().astype(int)
 
-            # Create a cost matrix with negative count (more match, less cost). Everywhere else is NaN
-            cost_mat = np.full((common_boxes['ped_id_pos_left'].max() + 1, common_boxes['ped_id_pos_right'].max() + 1),
-                               fill_value=np.nan)
-            cost_mat[common_boxes['ped_id_pos_left'].values, common_boxes['ped_id_pos_right'].values] = - common_boxes[
-                'detection_id'].values
+                # Create a cost matrix with negative count (more match, less cost). Everywhere else is NaN
+                cost_mat = np.full((common_boxes['ped_id_pos_left'].max() + 1, common_boxes['ped_id_pos_right'].max() + 1),
+                                fill_value=np.nan)
+                cost_mat[common_boxes['ped_id_pos_left'].values, common_boxes['ped_id_pos_right'].values] = - common_boxes[
+                    'detection_id'].values
 
-            # Find the min cost solution
-            matched_left_ids_pos, matched_right_ids_pos = solve_dense(cost_mat)
+                # Find the min cost solution
+                matched_left_ids_pos, matched_right_ids_pos = solve_dense(cost_mat)
 
-            # Map of the matched ids
-            matched_ids = pd.DataFrame(data=np.stack((left_ids_pos['ped_id'].values[matched_left_ids_pos],
-                                                      right_ids_pos['ped_id'].values[matched_right_ids_pos])).T,
-                                       columns=['left_ped_id', 'right_ped_id'])
+                # Map of the matched ids
+                matched_ids = pd.DataFrame(data=np.stack((left_ids_pos['ped_id'].values[matched_left_ids_pos],
+                                                        right_ids_pos['ped_id'].values[matched_right_ids_pos])).T,
+                                        columns=['left_ped_id', 'right_ped_id'])
 
-            # Assign the ids matched to subseq_df
-            subseq_df = pd.merge(subseq_df, matched_ids, how='outer', left_on='ped_id', right_on='right_ped_id')
-            subseq_df['left_ped_id'].fillna(np.inf, inplace=True)
-            subseq_df['ped_id'] = np.minimum(subseq_df['left_ped_id'], subseq_df['ped_id'])
+                # Assign the ids matched to subseq_df
+                subseq_df = pd.merge(subseq_df, matched_ids, how='outer', left_on='ped_id', right_on='right_ped_id')
+                subseq_df['left_ped_id'].fillna(np.inf, inplace=True)
+                subseq_df['ped_id'] = np.minimum(subseq_df['left_ped_id'], subseq_df['ped_id'])
 
             # Update seq_df
             seq_df = pd.concat([seq_df, subseq_df[subseq_df['frame'] > seq_df['frame'].max()]])
@@ -794,11 +829,56 @@ class HICLTracker:
         df['ped_id'] = df['ped_id'].astype('int64')
 
         # Coordinates are 1 based - revert
-        df['bb_left'] += 1
-        df['bb_top'] += 1
+        if not (('bdd' in str(self.config.val_splits[0])) or ('bdd' in str(self.config.test_splits[0]))):
+            # Coordinates are 1 based - revert
+            df['bb_left'] += 1
+            df['bb_top'] += 1
 
-        final_out = df[self.config.TRACKING_OUT_COLS].sort_values(by=['frame', 'ped_id'])
-        final_out.to_csv(output_file_path, header=False, index=False)
+            final_out = df[self.config.TRACKING_OUT_COLS].sort_values(by=['frame', 'ped_id'])
+            final_out.to_csv(output_file_path, header=False, index=False)
+        else:
+            final_out = df[self.config.TRACKING_OUT_COLS + ['label']].sort_values(by=['frame', 'ped_id'])
+            sequence_name = output_file_path.split('/')[-1].replace('.txt', '')
+            output_file_path = output_file_path.replace('txt', 'json')
+            BDD_NAME_MAPPING = {
+                1: "pedestrian",
+                2: "rider",
+                3: "car",
+                4: "truck", 
+                5: "bus",
+                6: "train",
+                7: "motorcycle",
+                8: "bicycle"
+            }
+
+            det_list = list()
+            df = df.reset_index()
+            max_frame = int(sorted(os.listdir(df.loc[0]['frame_path'][:-12]))[-1][:-4])
+            for frame in range(1, max_frame+1):
+                frame_dict = dict()
+                frame_df = final_out[final_out['frame'] == frame]
+                frame_dict['name'] = sequence_name + '/' + sequence_name + "-" + f"{frame:07d}.jpg"
+                frame_dict['index'] = int(frame - 1)
+                labels_list = list()
+                for idx, row in frame_df.iterrows():
+                    labels_dict = dict()
+                    labels_dict['id'] = row['ped_id']
+                    labels_dict['score'] = row['conf']
+                    # labels_dict['category'] = BDD_NAME_MAPPING[int(row['label'])]
+                    labels_dict['category'] = BDD_NAME_MAPPING[int(row['label'])]
+                    labels_dict['box2d'] = {
+                        'x1': row['bb_left'],
+                        'y1': row['bb_top'],
+                        'x2': row['bb_left'] + row['bb_width'],
+                        'y2': row['bb_top'] + row['bb_height']
+                    }
+                    labels_list.append(labels_dict)
+                frame_dict['labels'] = labels_list
+                det_list.append(frame_dict)
+
+            with open(output_file_path, 'w') as f:
+                json.dump(det_list, f)
+
 
 
 class FocalLoss(nn.Module):

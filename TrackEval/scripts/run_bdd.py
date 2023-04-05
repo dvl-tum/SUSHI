@@ -41,6 +41,50 @@ from multiprocessing import freeze_support
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import trackeval  # noqa: E402
 
+
+def evaluate_bdd(tracker_path, split, data_path, tracker_sub_folder, output_sub_folder):
+    """
+    Evaluate BDD using TrackEval toolkit
+    """
+    default_eval_config = trackeval.Evaluator.get_default_eval_config()
+    default_eval_config['PRINT_ONLY_COMBINED'] = True
+    default_dataset_config = trackeval.datasets.BDD100K.get_default_dataset_config()
+    default_metrics_config = {'METRICS': ['HOTA', 'CLEAR', 'Identity']}
+    config = {**default_eval_config, **default_dataset_config, **default_metrics_config}  # Merge default configs
+    eval_config = {k: v for k, v in config.items() if k in default_eval_config.keys()}
+    dataset_config = {k: v for k, v in config.items() if k in default_dataset_config.keys()}
+    metrics_config = {k: v for k, v in config.items() if k in default_metrics_config.keys()}
+
+    dataset = split.split('-')[0].upper()
+    eval_config['PRINT_CONFIG'] = False
+    eval_config['PLOT_CURVES'] = False
+    eval_config['TIME_PROGRESS'] = False
+    eval_config['USE_PARALLEL'] = True
+    metrics_config['PRINT_CONFIG'] = False
+    dataset_config['PRINT_CONFIG'] = False
+
+    dataset_config['SKIP_SPLIT_FOL'] = True
+    dataset_config['TRACKER_DISPLAY_NAMES'] = ['HICL-Tracker']
+
+    dataset_config['TRACKERS_TO_EVAL'] = [tracker_path]
+
+    dataset_config['TRACKER_SUB_FOLDER'] = tracker_sub_folder
+    dataset_config['OUTPUT_SUB_FOLDER'] = output_sub_folder
+
+    # Run code
+    evaluator = trackeval.Evaluator(eval_config)
+    dataset_list = [trackeval.datasets.BDD100K(dataset_config)]
+    metrics_list = []
+    for metric in [trackeval.metrics.HOTA, trackeval.metrics.CLEAR, trackeval.metrics.Identity]:
+        if metric.get_name() in metrics_config['METRICS']:
+            metrics_list.append(metric())
+    if len(metrics_list) == 0:
+        raise Exception('No metrics selected for evaluation')
+    return evaluator.evaluate(dataset_list, metrics_list)
+
+
+
+
 if __name__ == '__main__':
     freeze_support()
 

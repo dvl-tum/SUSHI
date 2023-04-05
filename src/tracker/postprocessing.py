@@ -33,7 +33,7 @@ class Postprocessor:
 
                 # Interpolate bb centers, heights and widths
                 full_traj_df = pd.merge(full_traj_df,
-                                        partial_traj_df[['ped_id', 'frame', 'mid_x', 'mid_y', 'bb_height', 'bb_width']],
+                                        partial_traj_df[['ped_id', 'frame', 'mid_x', 'mid_y', 'bb_height', 'bb_width', 'label', 'frame_path']],
                                         how='left', on='frame')
                 full_traj_df = full_traj_df.sort_values(by='frame').interpolate()
                 full_traj_dfs.append(full_traj_df)

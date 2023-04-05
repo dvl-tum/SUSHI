@@ -138,6 +138,7 @@ def get_arguments(args=None):
 
 
     # GRAPH PARAMETERS
+    parser.add_argument('--multiclass', help='Do graphs include detections from multiple classes', dest='multiclass', action='store_true')
     parser.add_argument('--top_k_nns', help='Similarity of nodes to connect in a graph', type=int, default=10)
     parser.add_argument('--frames_per_graph', help='Total number of frames to process', type=int, default=512)  # If larger than seq length, all frames of the seq will be used.
     parser.add_argument('--frames_per_level', type=int, nargs='*', help='Number of frames to process at each hierarchical level', default=[2, 4, 8, 16, 32, 64, 128, 256, 512])
@@ -195,7 +196,7 @@ def post_config(config):
     config = create_experiment_path(config)
 
     # Dataframe Columns to keep in order to produce a tracking output
-    config.VIDEO_COLUMNS = ['frame_path', 'frame', 'ped_id', 'bb_left', 'bb_top', 'bb_width', 'bb_height', 'bb_right', 'bb_bot']  # Columns to save in the output df
+    config.VIDEO_COLUMNS = ['frame_path', 'frame', 'ped_id', 'bb_left', 'bb_top', 'bb_width', 'bb_height', 'bb_right', 'bb_bot', 'label']  # Columns to save in the output df
     config.TRACKING_OUT_COLS = ['frame', 'ped_id', 'bb_left', 'bb_top', 'bb_width', 'bb_height', 'conf', 'x', 'y', 'z']  # MotCha output format
 
     # Motion things
