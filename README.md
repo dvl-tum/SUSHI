@@ -124,12 +124,13 @@ You can find specific commands and configurations [here](assets/per_dataset_comm
 ## Citation
 If you use our work in your research, please cite our publication:
 
-    @InProceedings{cetintas2023sushi,
-        author={Orcun Cetintas and Guillem Brasó and Laura Leal-Taixé},
-        title={Unifying Short and Long-Term Tracking with Graph Hierarchies},
-        booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-        month = {June},
-        year = {2023}
+    @InProceedings{Cetintas_2023_CVPR,
+        author    = {Cetintas, Orcun and Bras\'o, Guillem and Leal-Taix\'e, Laura},
+        title     = {Unifying Short and Long-Term Tracking With Graph Hierarchies},
+        booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+        month     = {June},
+        year      = {2023},
+        pages     = {22877-22887}
     }
 
 
