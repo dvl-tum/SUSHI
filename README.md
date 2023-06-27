@@ -2,7 +2,7 @@
 
 Official repository of our **CVPR 2023** paper 
 
-> [**Unifying Short and Long-Term Tracking with Graph Hierarchies**](https://arxiv.org/abs/2212.03038)
+> [**Unifying Short and Long-Term Tracking with Graph Hierarchies**](https://openaccess.thecvf.com/content/CVPR2023/papers/Cetintas_Unifying_Short_and_Long-Term_Tracking_With_Graph_Hierarchies_CVPR_2023_paper.pdf)
 > 
 > [Orcun Cetintas*](https://dvl.in.tum.de/team/cetintas/), [Guillem Brasó*](https://dvl.in.tum.de/team/braso/), [Laura Leal-Taixe](https://dvl.in.tum.de/team/lealtaixe/)
 > 
