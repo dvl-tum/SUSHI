@@ -1,3 +1,8 @@
+## Updates
+
+[22.12.2024] Check out our follow-up work [SPAM](https://link.springer.com/chapter/10.1007/978-3-031-73254-6_22) [ECCV 2024]! We are releasing an upgraded version of SUSHI code base, fully integrated into the SPAM code base in our new [repository](https://github.com/nv-dvl/SPAM).
+
+
 # Unifying Short and Long-Term Tracking with Graph Hierarchies :sushi:
 
 Official repository of our **CVPR 2023** paper 
